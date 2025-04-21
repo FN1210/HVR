@@ -240,17 +240,5 @@ if uploaded_file is not None:
         st.stop()
 else:
     st.info("""
-    **Anleitung**: Bitte lade eine Textdatei mit RR-Intervallen hoch (eine Zahl pro Zeile).\n
-    Beispiel-Daten können von PhysioNet heruntergeladen werden.
+    **Anleitung**: Bitte lade eine Textdatei mit RR-Intervallen hoch (eine Zahl pro Zeile).
     """)
-    if st.button("Beispieldaten laden"):
-        # Generate sample data
-        np.random.seed(42)
-        sample_rr = 800 + 50 * np.random.randn(200)
-        sample_rr = np.abs(sample_rr)  # Ensure positive values
-        st.download_button(
-            label="Beispiel RR-Intervalle herunterladen",
-            data="\n".join([f"{x:.1f}" for x in sample_rr]),
-            file_name="rr_intervals_sample.txt",
-            mime="text/plain"
-        )
