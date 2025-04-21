@@ -52,7 +52,7 @@ def plot_poincare_plotly(rr):
     fig.add_trace(go.Scatter(
         x=ellipse_x, y=ellipse_y,
         mode='lines',
-        line=dict(color='blue', dash='dot'),
+        line=dict(color='yellow', dash='dot'),
         name='Ellipse (SD1/SD2)'
     ))
 
