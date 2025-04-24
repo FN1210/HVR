@@ -33,7 +33,7 @@ def plot_poincare_plotly(rr):
     fig.add_trace(go.Scatter(
         x=x, y=y,
         mode='markers',
-        marker=dict(size=5, color='rgba(0,100,255,0.5)'),
+        marker=dict(size=4, color='#6DCFF6', opacity=0.6),
         name='RR[n] vs RR[n+1]'
     ))
 
@@ -41,7 +41,7 @@ def plot_poincare_plotly(rr):
         x=[min(x), max(x)],
         y=[min(x), max(x)],
         mode='lines',
-        line=dict(color='red', dash='dash'),
+        line=dict(color='#5AB9DC', dash='dash'),
         name='Identity line'
     ))
 
@@ -52,18 +52,22 @@ def plot_poincare_plotly(rr):
     fig.add_trace(go.Scatter(
         x=ellipse_x, y=ellipse_y,
         mode='lines',
-        line=dict(color='yellow', dash='dot'),
+        line=dict(color='#FFFFFF', dash='dot'),
         name='Ellipse (SD1/SD2)'
     ))
 
     fig.update_layout(
-        title="Poincaré Plot mit SD1 & SD2 (Zoom-fähig)",
+        title="Poincaré Plot (Corporate Design)",
         xaxis_title="RR[n] (ms)",
         yaxis_title="RR[n+1] (ms)",
         width=700,
         height=700,
         margin=dict(l=40, r=40, t=60, b=40),
-        showlegend=True
+        showlegend=True,
+        plot_bgcolor='#000000',
+        paper_bgcolor='#000000',
+        font=dict(color='#FFFFFF'),
+        legend=dict(bgcolor='#000000')
     )
 
     st.plotly_chart(fig, use_container_width=True)
@@ -83,12 +87,15 @@ def visibility_graph(ts):
 def plot_visibility_graph(G):
     degrees = [deg for _, deg in G.degree()]
     if len(degrees) > 0:
-        plt.figure(figsize=(8, 4))
-        plt.hist(degrees, bins=range(min(degrees), max(degrees)+1), alpha=0.8, edgecolor='black')
-        plt.title("Degree Distribution of Visibility Graph")
-        plt.xlabel("Degree")
-        plt.ylabel("Frequency")
-        plt.grid(True)
+        plt.figure(figsize=(8, 4), facecolor='#000')
+        plt.hist(degrees, bins=range(min(degrees), max(degrees)+1), alpha=0.8, color='#6DCFF6', edgecolor='white')
+        plt.title("Degree Distribution of Visibility Graph", color='white')
+        plt.xlabel("Degree", color='white')
+        plt.ylabel("Frequency", color='white')
+        plt.grid(True, color='#555', linestyle='--', linewidth=0.5)
+        plt.gca().tick_params(colors='white')
+        plt.gca().spines['bottom'].set_color('white')
+        plt.gca().spines['left'].set_color('white')
         st.pyplot(plt.gcf())
         plt.close()
     else:
@@ -114,21 +121,25 @@ def plot_dfa_loglog(rr):
         fluct = np.sqrt(np.mean(detrended**2, axis=1))
         F_n.append(np.mean(fluct))
 
-    plt.figure()
-    plt.plot(nvals[:len(F_n)], F_n, 'o-', label='F(n) vs n')
+    plt.figure(facecolor='#000')
+    plt.plot(nvals[:len(F_n)], F_n, 'o-', label='F(n) vs n', color='#6DCFF6')
     plt.xscale('log')
     plt.yscale('log')
-    plt.xlabel('Fenstergröße n (log)')
-    plt.ylabel('Fluktuation F(n) (log)')
-    plt.title('DFA – Log-Log-Darstellung')
-    plt.grid(True, which="both", ls="--", lw=0.5)
-    plt.legend()
+    plt.xlabel('Fenstergröße n (log)', color='white')
+    plt.ylabel('Fluktuation F(n) (log)', color='white')
+    plt.title('DFA – Log-Log-Darstellung', color='white')
+    plt.grid(True, which="both", ls="--", lw=0.5, color='#555')
+    plt.legend(facecolor='#000', edgecolor='#FFF', labelcolor='white')
+    plt.gca().tick_params(colors='white')
+    plt.gca().spines['bottom'].set_color('white')
+    plt.gca().spines['left'].set_color('white')
     st.pyplot(plt.gcf())
     plt.close()
 
 # ---------- Hauptlogik ----------
 if uploaded_file is not None:
-    rr_intervals = np.array([float(line.strip()) for line in uploaded_file if line.strip()])
+    rr_lines = uploaded_file.read().decode("utf-8").splitlines()
+    rr_intervals = np.array([float(line.strip()) for line in rr_lines if line.strip()])
 
     st.subheader("📈 Poincaré Plot")
     sd1, sd2 = plot_poincare_plotly(rr_intervals)
@@ -148,7 +159,7 @@ if uploaded_file is not None:
     elif 0.7 <= alpha <= 1.0:
         st.info("✅ Gesunde, komplexe HRV-Struktur.")
     else:
-        st.info("⚠️ Möglicherweise pathologische HRV-Struktur (übermäßig reguliert).")
+        st.info("⚠️ Möglicherweise pathologische HRV-Struktur (zu reguliert).")
 
     plot_dfa_loglog(rr_intervals)
 
