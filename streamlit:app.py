@@ -4,11 +4,10 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import nolds
-import sklearn
 
 # ---------- App Config ----------
 st.set_page_config(page_title="HRV Visualisierung", layout="centered")
-st.title("🫀 HRV Analyse: Poincaré Plot, Visibility Graph & DFA")
+st.title("🫀 HRV Analyse: Poincaré Plot, Visibility Graph, GHVE & DFA")
 
 # ---------- Datei-Upload ----------
 uploaded_file = st.file_uploader("📤 Lade deine RR-Intervall-Datei (.txt) hoch", type=["txt"])
@@ -42,7 +41,7 @@ def plot_poincare_plotly(rr):
         x=[min(x), max(x)],
         y=[min(x), max(x)],
         mode='lines',
-        line=dict(color='#002654', dash='dash'),  # Navy Blue
+        line=dict(color='#002654', dash='dash'),
         name='Identity line'
     ))
 
@@ -58,7 +57,7 @@ def plot_poincare_plotly(rr):
     ))
 
     fig.update_layout(
-        title="Poincaré Plot",
+        title="Poincaré Plot (Corporate Design)",
         xaxis_title="RR[n] (ms)",
         yaxis_title="RR[n+1] (ms)",
         width=700,
@@ -112,6 +111,22 @@ def plot_visibility_graph(G):
     else:
         st.warning("Nicht genug Knoten im Visibility Graph für eine Verteilung.")
 
+# ---------- GHVE Plot (Gradient Horizontal Visibility Edges) ----------
+def plot_ghve(rr):
+    rr_diff = np.diff(rr)
+    plt.figure(figsize=(8, 4), facecolor='#000')
+    plt.plot(rr_diff, label='RR Differenzen', color='#6DCFF6')
+    plt.title('GHVE – Gradient Horizontal Visibility Edges', color='white')
+    plt.xlabel('Index', color='white')
+    plt.ylabel('Differenz RR[n+1] - RR[n] (ms)', color='white')
+    plt.grid(True, color='#555', linestyle='--', linewidth=0.5)
+    plt.legend(facecolor='#000', edgecolor='#FFF', labelcolor='white')
+    plt.gca().tick_params(colors='white')
+    plt.gca().spines['bottom'].set_color('white')
+    plt.gca().spines['left'].set_color('white')
+    st.pyplot(plt.gcf())
+    plt.close()
+
 # ---------- DFA Analyse ----------
 def compute_dfa(rr):
     alpha = nolds.dfa(rr)
@@ -156,19 +171,19 @@ if uploaded_file is not None:
     rr_lines = uploaded_file.read().decode("utf-8").splitlines()
     rr_intervals = np.array([float(line.strip()) for line in rr_lines if line.strip()])
 
-    # Poincaré Plot
     st.subheader("📈 Poincaré Plot")
     sd1, sd2 = plot_poincare_plotly(rr_intervals)
     st.success(f"✅ **SD1** (kurzfristige HRV): {sd1:.2f} ms")
     st.success(f"✅ **SD2** (langfristige HRV): {sd2:.2f} ms")
 
-    # Visibility Graph
     st.subheader("🌐 Visibility Graph Analyse")
     with st.spinner("Erzeuge Visibility Graph..."):
-        G = visibility_graph_fast(rr_intervals[:1000])  # Performance-optimiert
+        G = visibility_graph_fast(rr_intervals[:1000])
     plot_visibility_graph(G)
 
-    # DFA Analyse
+    st.subheader("📊 GHVE – Gradient Horizontal Visibility Edges")
+    plot_ghve(rr_intervals)
+
     st.subheader("📉 DFA – Detrended Fluctuation Analysis")
     alpha = compute_dfa(rr_intervals)
     st.success(f"✅ **DFA α-Wert**: {alpha:.3f}")
