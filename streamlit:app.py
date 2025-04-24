@@ -41,7 +41,7 @@ def plot_poincare_plotly(rr):
         x=[min(x), max(x)],
         y=[min(x), max(x)],
         mode='lines',
-        line=dict(color='#5AB9DC', dash='dash'),
+        line=dict(color='#002654', dash='dash'),  # Navy Blue
         name='Identity line'
     ))
 
