@@ -73,14 +73,24 @@ def plot_poincare_plotly(rr):
     st.plotly_chart(fig, use_container_width=True)
     return SD1, SD2
 
-# ---------- Visibility Graph ----------
-def visibility_graph(ts):
+# ---------- Visibility Graph Funktionen ----------
+def visibility_graph_fast(ts):
     G = nx.Graph()
     N = len(ts)
     G.add_nodes_from(range(N))
     for i in range(N):
+        t_i, y_i = i, ts[i]
         for j in range(i+1, N):
-            if all(ts[k] < ts[i] + (ts[j] - ts[i]) * (k - i) / (j - i) for k in range(i+1, j)):
+            t_j, y_j = j, ts[j]
+            slope = (y_j - y_i) / (t_j - t_i)
+            visible = True
+            for k in range(i+1, j):
+                t_k, y_k = k, ts[k]
+                y_interp = y_i + slope * (t_k - t_i)
+                if y_k >= y_interp:
+                    visible = False
+                    break
+            if visible:
                 G.add_edge(i, j)
     return G
 
@@ -141,15 +151,19 @@ if uploaded_file is not None:
     rr_lines = uploaded_file.read().decode("utf-8").splitlines()
     rr_intervals = np.array([float(line.strip()) for line in rr_lines if line.strip()])
 
+    # Poincaré Plot
     st.subheader("📈 Poincaré Plot")
     sd1, sd2 = plot_poincare_plotly(rr_intervals)
     st.success(f"✅ **SD1** (kurzfristige HRV): {sd1:.2f} ms")
     st.success(f"✅ **SD2** (langfristige HRV): {sd2:.2f} ms")
 
+    # Visibility Graph
     st.subheader("🌐 Visibility Graph Analyse")
-    G = visibility_graph(rr_intervals)
+    with st.spinner("Erzeuge Visibility Graph..."):
+        G = visibility_graph_fast(rr_intervals[:1000])  # Performance-optimiert
     plot_visibility_graph(G)
 
+    # DFA Analyse
     st.subheader("📉 DFA – Detrended Fluctuation Analysis")
     alpha = compute_dfa(rr_intervals)
     st.success(f"✅ **DFA α-Wert**: {alpha:.3f}")
@@ -162,6 +176,5 @@ if uploaded_file is not None:
         st.info("⚠️ Möglicherweise pathologische HRV-Struktur (zu reguliert).")
 
     plot_dfa_loglog(rr_intervals)
-
 else:
     st.info("Bitte lade eine .txt-Datei mit RR-Intervallen hoch (eine Zahl pro Zeile).")
