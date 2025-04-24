@@ -90,6 +90,7 @@ def plot_visibility_graph(G):
         ax.set_ylabel("Frequency")
         ax.grid(True)
         st.pyplot(fig)
+        plt.close(fig)
     else:
         st.warning("Nicht genug Knoten im Visibility Graph für eine Verteilung.")
 
@@ -123,6 +124,7 @@ def plot_dfa_loglog(rr):
     ax.grid(True, which="both", ls="--", lw=0.5)
     ax.legend()
     st.pyplot(fig)
+    plt.close(fig)
 
 # ---------- Hauptlogik ----------
 if uploaded_file is not None:
