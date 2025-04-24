@@ -126,10 +126,14 @@ def plot_dfa_loglog(rr):
         if segments < 2:
             continue
         reshaped = rr[:segments * n].reshape((segments, n))
-        local_trends = np.polyfit(np.arange(n), reshaped.T, deg=1)
-        detrended = reshaped - (local_trends[0] * np.arange(n) + local_trends[1])
-        fluct = np.sqrt(np.mean(detrended**2, axis=1))
-        F_n.append(np.mean(fluct))
+        F_seg = []
+        for seg in reshaped:
+            p = np.polyfit(np.arange(n), seg, 1)
+            trend = p[0] * np.arange(n) + p[1]
+            detrended = seg - trend
+            fluct = np.sqrt(np.mean(detrended ** 2))
+            F_seg.append(fluct)
+        F_n.append(np.mean(F_seg))
 
     plt.figure(facecolor='#000')
     plt.plot(nvals[:len(F_n)], F_n, 'o-', label='F(n) vs n', color='#6DCFF6')
