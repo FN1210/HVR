@@ -83,14 +83,14 @@ def visibility_graph(ts):
 def plot_visibility_graph(G):
     degrees = [deg for _, deg in G.degree()]
     if len(degrees) > 0:
-        fig, ax = plt.subplots(figsize=(8, 4))
-        ax.hist(degrees, bins=range(min(degrees), max(degrees)+1), alpha=0.8, edgecolor='black')
-        ax.set_title("Degree Distribution of Visibility Graph")
-        ax.set_xlabel("Degree")
-        ax.set_ylabel("Frequency")
-        ax.grid(True)
-        st.pyplot(fig)
-        plt.close(fig)
+        plt.figure(figsize=(8, 4))
+        plt.hist(degrees, bins=range(min(degrees), max(degrees)+1), alpha=0.8, edgecolor='black')
+        plt.title("Degree Distribution of Visibility Graph")
+        plt.xlabel("Degree")
+        plt.ylabel("Frequency")
+        plt.grid(True)
+        st.pyplot(plt.gcf())
+        plt.close()
     else:
         st.warning("Nicht genug Knoten im Visibility Graph für eine Verteilung.")
 
@@ -114,17 +114,17 @@ def plot_dfa_loglog(rr):
         fluct = np.sqrt(np.mean(detrended**2, axis=1))
         F_n.append(np.mean(fluct))
 
-    fig, ax = plt.subplots()
-    ax.plot(nvals[:len(F_n)], F_n, 'o-', label='F(n) vs n')
-    ax.set_xscale('log')
-    ax.set_yscale('log')
-    ax.set_xlabel('Fenstergröße n (log)')
-    ax.set_ylabel('Fluktuation F(n) (log)')
-    ax.set_title('DFA – Log-Log-Darstellung')
-    ax.grid(True, which="both", ls="--", lw=0.5)
-    ax.legend()
-    st.pyplot(fig)
-    plt.close(fig)
+    plt.figure()
+    plt.plot(nvals[:len(F_n)], F_n, 'o-', label='F(n) vs n')
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.xlabel('Fenstergröße n (log)')
+    plt.ylabel('Fluktuation F(n) (log)')
+    plt.title('DFA – Log-Log-Darstellung')
+    plt.grid(True, which="both", ls="--", lw=0.5)
+    plt.legend()
+    st.pyplot(plt.gcf())
+    plt.close()
 
 # ---------- Hauptlogik ----------
 if uploaded_file is not None:
