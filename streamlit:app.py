@@ -22,7 +22,7 @@ def compute_sd1_sd2(rr):
     return SD1, SD2
 
 # ---------- Poincaré Plot ----------
-"""def plot_poincare_plotly(rr):
+def plot_poincare_plotly(rr):
     x = rr[:-1]
     y = rr[1:]
     SD1, SD2 = compute_sd1_sd2(rr)
@@ -67,7 +67,7 @@ def compute_sd1_sd2(rr):
     )
 
     st.plotly_chart(fig, use_container_width=True)
-    return SD1, SD2"""
+    return SD1, SD2
 
 # ---------- Visibility Graph ----------
 def visibility_graph(ts):
@@ -130,10 +130,10 @@ def plot_dfa_loglog(rr):
 if uploaded_file is not None:
     rr_intervals = np.array([float(line.strip()) for line in uploaded_file if line.strip()])
 
-    """st.subheader("📈 Poincaré Plot")
+    st.subheader("📈 Poincaré Plot")
     sd1, sd2 = plot_poincare_plotly(rr_intervals)
     st.success(f"✅ **SD1** (kurzfristige HRV): {sd1:.2f} ms")
-    st.success(f"✅ **SD2** (langfristige HRV): {sd2:.2f} ms")"""
+    st.success(f"✅ **SD2** (langfristige HRV): {sd2:.2f} ms")
 
     st.subheader("🌐 Visibility Graph Analyse")
     G = visibility_graph(rr_intervals)
