@@ -4,6 +4,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import nolds
+import scikit-learn
 
 # ---------- App Config ----------
 st.set_page_config(page_title="HRV Visualisierung", layout="centered")
