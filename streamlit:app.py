@@ -130,10 +130,10 @@ def plot_dfa_loglog(rr):
 if uploaded_file is not None:
     rr_intervals = np.array([float(line.strip()) for line in uploaded_file if line.strip()])
 
-    st.subheader("📈 Poincaré Plot")
+    """st.subheader("📈 Poincaré Plot")
     sd1, sd2 = plot_poincare_plotly(rr_intervals)
     st.success(f"✅ **SD1** (kurzfristige HRV): {sd1:.2f} ms")
-    st.success(f"✅ **SD2** (langfristige HRV): {sd2:.2f} ms")
+    st.success(f"✅ **SD2** (langfristige HRV): {sd2:.2f} ms")"""
 
     st.subheader("🌐 Visibility Graph Analyse")
     G = visibility_graph(rr_intervals)
