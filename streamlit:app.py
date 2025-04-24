@@ -57,7 +57,7 @@ def plot_poincare_plotly(rr):
     ))
 
     fig.update_layout(
-        title="Poincaré Plot (Corporate Design)",
+        title="Poincaré Plot",
         xaxis_title="RR[n] (ms)",
         yaxis_title="RR[n+1] (ms)",
         width=700,
