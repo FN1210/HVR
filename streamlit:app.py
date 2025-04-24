@@ -22,7 +22,7 @@ def compute_sd1_sd2(rr):
     return SD1, SD2
 
 # ---------- Poincaré Plot ----------
-def plot_poincare_plotly(rr):
+"""def plot_poincare_plotly(rr):
     x = rr[:-1]
     y = rr[1:]
     SD1, SD2 = compute_sd1_sd2(rr)
@@ -67,7 +67,7 @@ def plot_poincare_plotly(rr):
     )
 
     st.plotly_chart(fig, use_container_width=True)
-    return SD1, SD2
+    return SD1, SD2"""
 
 # ---------- Visibility Graph ----------
 def visibility_graph(ts):
