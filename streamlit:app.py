@@ -111,7 +111,21 @@ def plot_visibility_graph(G):
     else:
         st.warning("Nicht genug Knoten im Visibility Graph für eine Verteilung.")
 
-# ---------- GHVE Plot (Gradient Horizontal Visibility Edges) ----------
+def plot_visibility_network(G):
+    if len(G.nodes) > 0:
+        plt.figure(figsize=(10, 6), facecolor='#000')
+        pos = nx.spring_layout(G, seed=42)  # Layout für schöne Verteilung
+        nx.draw_networkx_nodes(G, pos, node_size=20, node_color='#6DCFF6', alpha=0.8)
+        nx.draw_networkx_edges(G, pos, edge_color='#FFFFFF', alpha=0.2)
+        plt.title("Graphisches Netzwerkschaubild des Visibility Graph", color='white')
+        plt.axis('off')
+        plt.gca().set_facecolor('#000')
+        st.pyplot(plt.gcf())
+        plt.close()
+    else:
+        st.warning("Nicht genug Knoten im Visibility Graph für eine Netzwerkvisualisierung.")
+
+# ---------- GHVE Plot ----------
 def plot_ghve(rr):
     rr_diff = np.diff(rr)
     plt.figure(figsize=(8, 4), facecolor='#000')
@@ -180,6 +194,9 @@ if uploaded_file is not None:
     with st.spinner("Erzeuge Visibility Graph..."):
         G = visibility_graph_fast(rr_intervals[:1000])
     plot_visibility_graph(G)
+    
+    st.subheader("🌐 Sichtbarkeitsnetzwerk – vollständige Darstellung")
+    plot_visibility_network(G)
 
     st.subheader("📊 GHVE – Gradient Horizontal Visibility Edges")
     plot_ghve(rr_intervals)
@@ -196,5 +213,6 @@ if uploaded_file is not None:
         st.info("⚠️ Möglicherweise pathologische HRV-Struktur (zu reguliert).")
 
     plot_dfa_loglog(rr_intervals)
+
 else:
     st.info("Bitte lade eine .txt-Datei mit RR-Intervallen hoch (eine Zahl pro Zeile).")
