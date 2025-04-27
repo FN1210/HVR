@@ -73,7 +73,7 @@ def plot_poincare_plotly(rr):
     st.plotly_chart(fig, use_container_width=True)
     return SD1, SD2
 
-# ---------- Visibility Graph Funktionen ----------
+# ---------- Visibility Graph (klassisch) ----------
 def visibility_graph_fast(ts):
     G = nx.Graph()
     N = len(ts)
@@ -114,7 +114,7 @@ def plot_visibility_graph(G):
 def plot_visibility_network(G):
     if len(G.nodes) > 0:
         plt.figure(figsize=(10, 6), facecolor='#000')
-        pos = nx.spring_layout(G, seed=42)  # Layout für schöne Verteilung
+        pos = nx.spring_layout(G, seed=42)
         nx.draw_networkx_nodes(G, pos, node_size=20, node_color='#6DCFF6', alpha=0.8)
         nx.draw_networkx_edges(G, pos, edge_color='#FFFFFF', alpha=0.2)
         plt.title("Graphisches Netzwerkschaubild des Visibility Graph", color='white')
@@ -125,7 +125,7 @@ def plot_visibility_network(G):
     else:
         st.warning("Nicht genug Knoten im Visibility Graph für eine Netzwerkvisualisierung.")
 
-# ---------- GHVE Plot ----------
+# ---------- GHVE Funktionen ----------
 def plot_ghve(rr):
     rr_diff = np.diff(rr)
     plt.figure(figsize=(8, 4), facecolor='#000')
@@ -140,6 +140,31 @@ def plot_ghve(rr):
     plt.gca().spines['left'].set_color('white')
     st.pyplot(plt.gcf())
     plt.close()
+
+def ghve_visibility_graph(rr_diff):
+    G = nx.Graph()
+    N = len(rr_diff)
+    G.add_nodes_from(range(N))
+    for i in range(N):
+        for j in range(i+1, N):
+            visible = True
+            for k in range(i+1, j):
+                if not (rr_diff[i] > rr_diff[k] and rr_diff[j] > rr_diff[k]):
+                    visible = False
+                    break
+            if visible:
+                G.add_edge(i, j)
+    return G
+
+def compute_ghve_entropy(G):
+    degrees = np.array([d for n, d in G.degree()])
+    if len(degrees) == 0:
+        return np.nan
+    hist = np.bincount(degrees)
+    prob = hist / np.sum(hist)
+    prob = prob[prob > 0]
+    entropy = -np.sum(prob * np.log(prob))
+    return entropy
 
 # ---------- DFA Analyse ----------
 def compute_dfa(rr):
@@ -195,11 +220,21 @@ if uploaded_file is not None:
         G = visibility_graph_fast(rr_intervals[:1000])
     plot_visibility_graph(G)
     
-    st.subheader("🌐 Visibility Graph  Network")
+    st.subheader("🌐 Visibility Graph Netzwerk")
     plot_visibility_network(G)
 
     st.subheader("📊 GHVE – Gradient Horizontal Visibility Edges")
     plot_ghve(rr_intervals)
+
+    with st.spinner("Berechne GHVE Netzwerk und Entropie..."):
+        rr_diff = np.diff(rr_intervals)
+        G_ghve = ghve_visibility_graph(rr_diff)
+        ghve_entropy = compute_ghve_entropy(G_ghve)
+
+    st.success(f"✅ **GHVE Entropie**: {ghve_entropy:.3f}")
+
+    st.subheader("🌐 GHVE Netzwerkvisualisierung")
+    plot_visibility_network(G_ghve)
 
     st.subheader("📉 DFA – Detrended Fluctuation Analysis")
     alpha = compute_dfa(rr_intervals)
