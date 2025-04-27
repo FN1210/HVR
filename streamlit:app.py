@@ -195,7 +195,7 @@ if uploaded_file is not None:
         G = visibility_graph_fast(rr_intervals[:1000])
     plot_visibility_graph(G)
     
-    st.subheader("🌐 Sichtbarkeitsnetzwerk – vollständige Darstellung")
+    st.subheader("🌐 Visibility Graph  Network")
     plot_visibility_network(G)
 
     st.subheader("📊 GHVE – Gradient Horizontal Visibility Edges")
