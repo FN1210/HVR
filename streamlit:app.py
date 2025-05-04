@@ -88,7 +88,7 @@ def visibility_graph_fast(ts):
                 G.add_edge(i, j)
     return G
 
-# ---------- GHVE (schnell) ----------
+# ---------- GHVE ----------
 def ghve_visibility_graph_fast(rr_diff):
     N = len(rr_diff)
     G = nx.Graph()
@@ -102,7 +102,6 @@ def ghve_visibility_graph_fast(rr_diff):
             max_val = rr_diff[j]
     return G
 
-# ---------- Entropie ----------
 def compute_ghve_entropy(G):
     degrees = np.array([d for n, d in G.degree()])
     if len(degrees) == 0:
@@ -113,7 +112,7 @@ def compute_ghve_entropy(G):
     entropy = -np.sum(prob * np.log(prob))
     return entropy
 
-# ---------- Plots ----------
+# ---------- Plot Funktionen ----------
 def plot_visibility_graph(G):
     degrees = [deg for _, deg in G.degree()]
     if degrees:
@@ -143,6 +142,10 @@ def plot_visibility_network(G):
     else:
         st.warning("Nicht genug Knoten für Netzwerkvisualisierung.")
 
+# ---------- DFA ----------
+def compute_dfa(rr):
+    return nolds.dfa(rr)
+
 def plot_dfa_loglog(rr, max_windows=20):
     rr = rr - np.mean(rr)
     N = len(rr)
@@ -158,7 +161,6 @@ def plot_dfa_loglog(rr, max_windows=20):
         reshaped = rr[:segments * n].reshape((segments, n))
         x = np.arange(n)
 
-        # vektorisierte lineare Trends je Segment
         trends = np.polyfit(x, reshaped.T, 1)
         fits = trends[0] * x[:, None] + trends[1]
         detrended = reshaped - fits.T
@@ -169,11 +171,9 @@ def plot_dfa_loglog(rr, max_windows=20):
         log_n.append(np.log10(n))
         log_F.append(np.log10(F_n))
 
-    # Regression im log-log-Raum
     slope, intercept = np.polyfit(log_n, log_F, 1)
     reg_line = 10**(intercept + slope * np.array(log_n))
 
-    # Plot
     plt.figure(facecolor='#000')
     plt.plot(10**np.array(log_n), 10**np.array(log_F), 'o-', label='F(n) vs n', color='#6DCFF6')
     plt.plot(10**np.array(log_n), reg_line, '--', color='white', label=f'α ≈ {slope:.3f}')
@@ -182,44 +182,6 @@ def plot_dfa_loglog(rr, max_windows=20):
     plt.xlabel('Fenstergröße n (log)', color='white')
     plt.ylabel('Fluktuation F(n) (log)', color='white')
     plt.title('DFA – Log-Log-Darstellung (inkl. α)', color='white')
-    plt.grid(True, which="both", ls="--", lw=0.5, color='#555')
-    plt.legend(facecolor='#000', edgecolor='#FFF', labelcolor='white')
-    plt.gca().tick_params(colors='white')
-    plt.gca().spines['bottom'].set_color('white')
-    plt.gca().spines['left'].set_color('white')
-    st.pyplot(plt.gcf())
-    plt.close()
-
-# ---------- DFA ----------
-def compute_dfa(rr):
-    return nolds.dfa(rr)
-
-def plot_dfa_loglog(rr):
-    rr = rr - np.mean(rr)
-    nvals = np.unique(np.logspace(1, np.log10(len(rr)//4), num=20, dtype=int))
-    F_n = []
-
-    for n in nvals:
-        segments = len(rr) // n
-        if segments < 2:
-            continue
-        reshaped = rr[:segments * n].reshape((segments, n))
-        F_seg = []
-        for seg in reshaped:
-            p = np.polyfit(np.arange(n), seg, 1)
-            trend = p[0] * np.arange(n) + p[1]
-            detrended = seg - trend
-            fluct = np.sqrt(np.mean(detrended ** 2))
-            F_seg.append(fluct)
-        F_n.append(np.mean(F_seg))
-
-    plt.figure(facecolor='#000')
-    plt.plot(nvals[:len(F_n)], F_n, 'o-', label='F(n) vs n', color='#6DCFF6')
-    plt.xscale('log')
-    plt.yscale('log')
-    plt.xlabel('Fenstergröße n (log)', color='white')
-    plt.ylabel('Fluktuation F(n) (log)', color='white')
-    plt.title('DFA – Log-Log-Darstellung', color='white')
     plt.grid(True, which="both", ls="--", lw=0.5, color='#555')
     plt.legend(facecolor='#000', edgecolor='#FFF', labelcolor='white')
     plt.gca().tick_params(colors='white')
@@ -246,20 +208,18 @@ if uploaded_file is not None:
     st.subheader("🌐 Sichtbarkeitsgraph (Netzwerk)")
     plot_visibility_network(G)
 
-    st.subheader("📊 GHVE – Gradient Horizontal Visibility Edges")
-    plot_ghve(rr_intervals)
-
     st.subheader("🌐 GHVE Netzwerk und Entropie")
     with st.spinner("Berechne GHVE Netzwerk..."):
         rr_diff = np.diff(rr_intervals)
         G_ghve = ghve_visibility_graph_fast(rr_diff)
-        ghve_entropy = compute_ghve_entropy(G_ghve)
-    st.success(f"✅ **GHVE Entropie**: {ghve_entropy:.3f}")
+        entropy = compute_ghve_entropy(G_ghve)
+    st.success(f"✅ **GHVE Entropie**: {entropy:.3f}")
     plot_visibility_network(G_ghve)
 
     st.subheader("📉 DFA – Detrended Fluctuation Analysis")
     alpha = compute_dfa(rr_intervals)
     st.success(f"✅ **DFA α-Wert**: {alpha:.3f}")
     plot_dfa_loglog(rr_intervals)
+
 else:
     st.info("Bitte lade eine .txt-Datei mit RR-Intervallen hoch (eine Zahl pro Zeile).")
