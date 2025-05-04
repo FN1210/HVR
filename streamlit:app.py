@@ -29,7 +29,6 @@ def plot_poincare_plotly(rr):
     mean_rr = np.mean(rr)
 
     fig = go.Figure()
-
     fig.add_trace(go.Scatter(
         x=x, y=y,
         mode='markers',
@@ -73,7 +72,7 @@ def plot_poincare_plotly(rr):
     st.plotly_chart(fig, use_container_width=True)
     return SD1, SD2
 
-# ---------- Visibility Graph (klassisch) ----------
+# ---------- Visibility Graph ----------
 def visibility_graph_fast(ts):
     G = nx.Graph()
     N = len(ts)
@@ -94,36 +93,9 @@ def visibility_graph_fast(ts):
                 G.add_edge(i, j)
     return G
 
-# ---------- GHVE - superschnell ----------
-def ghve_visibility_graph_fast(rr_diff):
-    N = len(rr_diff)
-    G = nx.Graph()
-    G.add_nodes_from(range(N))
-    for i in range(N-1):
-        max_val = rr_diff[i]
-        for j in range(i+1, N):
-            if rr_diff[j] < max_val:
-                continue
-            else:
-                G.add_edge(i, j)
-                max_val = rr_diff[j]
-    return G
-
-# ---------- Entropie Berechnung ----------
-def compute_ghve_entropy(G):
-    degrees = np.array([d for n, d in G.degree()])
-    if len(degrees) == 0:
-        return np.nan
-    hist = np.bincount(degrees)
-    prob = hist / np.sum(hist)
-    prob = prob[prob > 0]
-    entropy = -np.sum(prob * np.log(prob))
-    return entropy
-
-# ---------- Plots ----------
 def plot_visibility_graph(G):
     degrees = [deg for _, deg in G.degree()]
-    if len(degrees) > 0:
+    if degrees:
         plt.figure(figsize=(8, 4), facecolor='#000')
         plt.hist(degrees, bins=range(min(degrees), max(degrees)+1), alpha=0.8, color='#6DCFF6', edgecolor='white')
         plt.title("Degree Distribution of Visibility Graph", color='white')
@@ -139,7 +111,7 @@ def plot_visibility_graph(G):
         st.warning("Nicht genug Knoten im Visibility Graph für eine Verteilung.")
 
 def plot_visibility_network(G):
-    if len(G.nodes) > 0:
+    if G.number_of_nodes() > 0:
         plt.figure(figsize=(10, 6), facecolor='#000')
         pos = nx.spring_layout(G, seed=42)
         nx.draw_networkx_nodes(G, pos, node_size=20, node_color='#6DCFF6', alpha=0.8)
@@ -151,6 +123,31 @@ def plot_visibility_network(G):
         plt.close()
     else:
         st.warning("Nicht genug Knoten für Netzwerkvisualisierung.")
+
+# ---------- GHVE ----------
+def ghve_visibility_graph_fast(rr_diff):
+    N = len(rr_diff)
+    G = nx.Graph()
+    G.add_nodes_from(range(N))
+    for i in range(N-1):
+        max_val = rr_diff[i]
+        for j in range(i+1, N):
+            if rr_diff[j] < max_val:
+                continue
+            else:
+                G.add_edge(i, j)
+                max_val = rr_diff[j]
+    return G
+
+def compute_ghve_entropy(G):
+    degrees = np.array([d for n, d in G.degree()])
+    if len(degrees) == 0:
+        return np.nan
+    hist = np.bincount(degrees)
+    prob = hist / np.sum(hist)
+    prob = prob[prob > 0]
+    entropy = -np.sum(prob * np.log(prob))
+    return entropy
 
 def plot_ghve(rr):
     rr_diff = np.diff(rr)
@@ -167,10 +164,9 @@ def plot_ghve(rr):
     st.pyplot(plt.gcf())
     plt.close()
 
-# ---------- DFA Analyse ----------
+# ---------- DFA mit Regressionslinie ----------
 def compute_dfa(rr):
-    alpha = nolds.dfa(rr)
-    return alpha
+    return nolds.dfa(rr)
 
 def plot_dfa_loglog(rr):
     rr = rr - np.mean(rr)
@@ -191,13 +187,19 @@ def plot_dfa_loglog(rr):
             F_seg.append(fluct)
         F_n.append(np.mean(F_seg))
 
+    log_n = np.log10(nvals[:len(F_n)])
+    log_F = np.log10(F_n)
+    slope, intercept = np.polyfit(log_n, log_F, 1)
+    reg_line = 10**(intercept + slope * log_n)
+
     plt.figure(facecolor='#000')
     plt.plot(nvals[:len(F_n)], F_n, 'o-', label='F(n) vs n', color='#6DCFF6')
+    plt.plot(nvals[:len(F_n)], reg_line, '--', color='white', label=f'α (Regress.) ≈ {slope:.3f}')
     plt.xscale('log')
     plt.yscale('log')
     plt.xlabel('Fenstergröße n (log)', color='white')
     plt.ylabel('Fluktuation F(n) (log)', color='white')
-    plt.title('DFA – Log-Log-Darstellung', color='white')
+    plt.title('DFA – Log-Log-Darstellung mit Regression', color='white')
     plt.grid(True, which="both", ls="--", lw=0.5, color='#555')
     plt.legend(facecolor='#000', edgecolor='#FFF', labelcolor='white')
     plt.gca().tick_params(colors='white')
@@ -237,15 +239,7 @@ if uploaded_file is not None:
 
     st.subheader("📉 DFA – Detrended Fluctuation Analysis")
     alpha = compute_dfa(rr_intervals)
-    st.success(f"✅ **DFA α-Wert**: {alpha:.3f}")
-
-    if alpha < 0.7:
-        st.info("🔎 Geringe Korrelation (möglicherweise zufällige HRV-Muster).")
-    elif 0.7 <= alpha <= 1.0:
-        st.info("✅ Gesunde, komplexe HRV-Struktur.")
-    else:
-        st.info("⚠️ Möglicherweise pathologische HRV-Struktur (zu reguliert).")
-
+    st.success(f"✅ **DFA α-Wert (nolds):** {alpha:.3f}")
     plot_dfa_loglog(rr_intervals)
 
 else:
