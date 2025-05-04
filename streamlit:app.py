@@ -122,7 +122,7 @@ def plot_visibility_network(G):
         pos = nx.spring_layout(G, seed=42)
         nx.draw_networkx_nodes(G, pos, node_size=20, node_color='#6DCFF6', alpha=0.8)
         nx.draw_networkx_edges(G, pos, edge_color='#FFFFFF', alpha=0.2)
-        plt.title("Graphisches Netzwerkschaubild", color='white')
+        plt.title("GHVE Network Visualization", color='white')
         plt.axis('off')
         plt.gca().set_facecolor('#000')
         st.pyplot(plt.gcf())
