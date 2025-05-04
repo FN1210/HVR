@@ -143,14 +143,46 @@ def plot_visibility_network(G):
     else:
         st.warning("Nicht genug Knoten für Netzwerkvisualisierung.")
 
-def plot_ghve(rr):
-    rr_diff = np.diff(rr)
-    plt.figure(figsize=(8, 4), facecolor='#000')
-    plt.plot(rr_diff, label='RR Differenzen', color='#6DCFF6')
-    plt.title('GHVE – Gradient Horizontal Visibility Edges', color='white')
-    plt.xlabel('Index', color='white')
-    plt.ylabel('Differenz RR[n+1] - RR[n] (ms)', color='white')
-    plt.grid(True, color='#555', linestyle='--', linewidth=0.5)
+def plot_dfa_loglog(rr, max_windows=20):
+    rr = rr - np.mean(rr)
+    N = len(rr)
+    nvals = np.unique(np.logspace(1, np.log10(N // 4), num=max_windows, dtype=int))
+
+    log_n = []
+    log_F = []
+
+    for n in nvals:
+        segments = N // n
+        if segments < 4:
+            continue
+        reshaped = rr[:segments * n].reshape((segments, n))
+        x = np.arange(n)
+
+        # vektorisierte lineare Trends je Segment
+        trends = np.polyfit(x, reshaped.T, 1)
+        fits = trends[0] * x[:, None] + trends[1]
+        detrended = reshaped - fits.T
+
+        F = np.sqrt(np.mean(detrended**2, axis=1))
+        F_n = np.mean(F)
+
+        log_n.append(np.log10(n))
+        log_F.append(np.log10(F_n))
+
+    # Regression im log-log-Raum
+    slope, intercept = np.polyfit(log_n, log_F, 1)
+    reg_line = 10**(intercept + slope * np.array(log_n))
+
+    # Plot
+    plt.figure(facecolor='#000')
+    plt.plot(10**np.array(log_n), 10**np.array(log_F), 'o-', label='F(n) vs n', color='#6DCFF6')
+    plt.plot(10**np.array(log_n), reg_line, '--', color='white', label=f'α ≈ {slope:.3f}')
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.xlabel('Fenstergröße n (log)', color='white')
+    plt.ylabel('Fluktuation F(n) (log)', color='white')
+    plt.title('DFA – Log-Log-Darstellung (inkl. α)', color='white')
+    plt.grid(True, which="both", ls="--", lw=0.5, color='#555')
     plt.legend(facecolor='#000', edgecolor='#FFF', labelcolor='white')
     plt.gca().tick_params(colors='white')
     plt.gca().spines['bottom'].set_color('white')
