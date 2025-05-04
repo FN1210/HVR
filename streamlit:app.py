@@ -12,7 +12,7 @@ st.title("🫀 HRV Analyse: Poincaré Plot, Visibility Graph, GHVE & DFA")
 # ---------- Datei-Upload ----------
 uploaded_file = st.file_uploader("📤 Lade deine RR-Intervall-Datei (.txt) hoch", type=["txt"])
 
-# ---------- SD1 & SD2 Berechnung ----------
+# ---------- SD1 & SD2 ----------
 def compute_sd1_sd2(rr):
     diff = rr[1:] - rr[:-1]
     SDSD = np.std(diff, ddof=1)
@@ -27,31 +27,19 @@ def plot_poincare_plotly(rr):
     y = rr[1:]
     SD1, SD2 = compute_sd1_sd2(rr)
     mean_rr = np.mean(rr)
-
     fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=x, y=y,
-        mode='markers',
-        marker=dict(size=4, color='#6DCFF6', opacity=0.6),
-        name='RR[n] vs RR[n+1]'
-    ))
-    fig.add_trace(go.Scatter(
-        x=[min(x), max(x)],
-        y=[min(x), max(x)],
-        mode='lines',
-        line=dict(color='#002654', dash='dash'),
-        name='Identity line'
-    ))
-
+    fig.add_trace(go.Scatter(x=x, y=y, mode='markers',
+                             marker=dict(size=4, color='#6DCFF6', opacity=0.6),
+                             name='RR[n] vs RR[n+1]'))
+    fig.add_trace(go.Scatter(x=[min(x), max(x)], y=[min(x), max(x)],
+                             mode='lines', line=dict(color='#002654', dash='dash'),
+                             name='Identity line'))
     theta = np.linspace(0, 2*np.pi, 100)
-    ellipse_x = mean_rr + SD2 * np.cos(theta) * np.cos(np.pi/4) - SD1 * np.sin(theta) * np.sin(np.pi/4)
-    ellipse_y = mean_rr + SD2 * np.cos(theta) * np.sin(np.pi/4) + SD1 * np.sin(theta) * np.cos(np.pi/4)
-    fig.add_trace(go.Scatter(
-        x=ellipse_x, y=ellipse_y,
-        mode='lines',
-        line=dict(color='#FFFFFF', dash='dot'),
-        name='Ellipse (SD1/SD2)'
-    ))
+    ellipse_x = mean_rr + SD2*np.cos(theta)*np.cos(np.pi/4) - SD1*np.sin(theta)*np.sin(np.pi/4)
+    ellipse_y = mean_rr + SD2*np.cos(theta)*np.sin(np.pi/4) + SD1*np.sin(theta)*np.cos(np.pi/4)
+    fig.add_trace(go.Scatter(x=ellipse_x, y=ellipse_y, mode='lines',
+                             line=dict(color='#FFFFFF', dash='dot'),
+                             name='Ellipse (SD1/SD2)'))
 
     fig.update_layout(
         title="Poincaré Plot",
@@ -66,7 +54,6 @@ def plot_poincare_plotly(rr):
         font=dict(color='#FFFFFF'),
         legend=dict(bgcolor='#000000')
     )
-
     st.plotly_chart(fig, use_container_width=True)
     return SD1, SD2
 
@@ -146,7 +133,7 @@ def plot_ghve(rr):
     st.pyplot(plt.gcf())
     plt.close()
 
-# ---------- DFA (optimiert) ----------
+# ---------- DFA (schnell & mit Regression) ----------
 def compute_dfa(rr):
     return nolds.dfa(rr)
 
@@ -177,12 +164,12 @@ def plot_dfa_loglog(rr, max_windows=20):
 
     plt.figure(facecolor='#000')
     plt.plot(10**np.array(log_n), 10**np.array(log_F), 'o-', label='F(n) vs n', color='#6DCFF6')
-    plt.plot(10**np.array(log_n), reg_line, '--', color='white', label=f'α (Regress.) ≈ {slope:.3f}')
+    plt.plot(10**np.array(log_n), reg_line, '--', color='white', label=f'α ≈ {slope:.3f}')
     plt.xscale('log')
     plt.yscale('log')
     plt.xlabel('Fenstergröße n (log)', color='white')
     plt.ylabel('Fluktuation F(n) (log)', color='white')
-    plt.title('DFA – Log-Log-Darstellung (optimiert)', color='white')
+    plt.title('DFA – Log-Log-Darstellung', color='white')
     plt.grid(True, which="both", ls="--", lw=0.5, color='#555')
     plt.legend(facecolor='#000', edgecolor='#FFF', labelcolor='white')
     plt.gca().tick_params(colors='white')
@@ -198,7 +185,7 @@ if uploaded_file is not None:
 
     st.subheader("📈 Poincaré Plot")
     sd1, sd2 = plot_poincare_plotly(rr_intervals)
-    st.success(f"✅ **SD1**: {sd1:.2f} ms  **SD2**: {sd2:.2f} ms")
+    st.success(f"✅ SD1: {sd1:.2f} ms  SD2: {sd2:.2f} ms")
 
     st.subheader("🌐 Visibility Graph")
     G = visibility_graph_fast(rr_intervals[:1000])
@@ -216,7 +203,7 @@ if uploaded_file is not None:
 
     st.subheader("📉 DFA – Detrended Fluctuation Analysis")
     alpha = compute_dfa(rr_intervals)
-    st.success(f"α (nolds): {alpha:.3f}")
+    st.success(f"✅ DFA α-Wert (nolds): {alpha:.3f}")
     plot_dfa_loglog(rr_intervals)
 
 else:
