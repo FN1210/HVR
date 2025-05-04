@@ -29,28 +29,20 @@ def plot_poincare_plotly(rr):
     mean_rr = np.mean(rr)
 
     fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=x, y=y,
-        mode='markers',
-        marker=dict(size=4, color='#6DCFF6', opacity=0.6),
-        name='RR[n] vs RR[n+1]'
-    ))
-    fig.add_trace(go.Scatter(
-        x=[min(x), max(x)],
-        y=[min(x), max(x)],
-        mode='lines',
-        line=dict(color='#002654', dash='dash'),
-        name='Identity line'
-    ))
+    fig.add_trace(go.Scatter(x=x, y=y, mode='markers',
+                             marker=dict(size=4, color='#6DCFF6', opacity=0.6),
+                             name='RR[n] vs RR[n+1]'))
+    fig.add_trace(go.Scatter(x=[min(x), max(x)], y=[min(x), max(x)],
+                             mode='lines', line=dict(color='#002654', dash='dash'),
+                             name='Identity line'))
+
     theta = np.linspace(0, 2*np.pi, 100)
     ellipse_x = mean_rr + SD2 * np.cos(theta) * np.cos(np.pi/4) - SD1 * np.sin(theta) * np.sin(np.pi/4)
     ellipse_y = mean_rr + SD2 * np.cos(theta) * np.sin(np.pi/4) + SD1 * np.sin(theta) * np.cos(np.pi/4)
-    fig.add_trace(go.Scatter(
-        x=ellipse_x, y=ellipse_y,
-        mode='lines',
-        line=dict(color='#FFFFFF', dash='dot'),
-        name='Ellipse (SD1/SD2)'
-    ))
+    fig.add_trace(go.Scatter(x=ellipse_x, y=ellipse_y, mode='lines',
+                             line=dict(color='#FFFFFF', dash='dot'),
+                             name='Ellipse (SD1/SD2)'))
+
     fig.update_layout(
         title="Poincaré Plot",
         xaxis_title="RR[n] (ms)",
@@ -73,15 +65,10 @@ def visibility_graph_fast(ts):
     N = len(ts)
     G.add_nodes_from(range(N))
     for i in range(N):
-        t_i, y_i = i, ts[i]
         for j in range(i+1, N):
-            t_j, y_j = j, ts[j]
-            slope = (y_j - y_i) / (t_j - t_i)
             visible = True
             for k in range(i+1, j):
-                t_k, y_k = k, ts[k]
-                y_interp = y_i + slope * (t_k - t_i)
-                if y_k >= y_interp:
+                if ts[k] >= ts[i] + (ts[j] - ts[i]) * ((k - i) / (j - i)):
                     visible = False
                     break
             if visible:
@@ -90,12 +77,12 @@ def visibility_graph_fast(ts):
 
 # ---------- GHVE ----------
 def ghve_visibility_graph_fast(rr_diff):
-    N = len(rr_diff)
     G = nx.Graph()
+    N = len(rr_diff)
     G.add_nodes_from(range(N))
-    for i in range(N-1):
+    for i in range(N - 1):
         max_val = rr_diff[i]
-        for j in range(i+1, N):
+        for j in range(i + 1, N):
             if rr_diff[j] < max_val:
                 continue
             G.add_edge(i, j)
@@ -103,21 +90,21 @@ def ghve_visibility_graph_fast(rr_diff):
     return G
 
 def compute_ghve_entropy(G):
-    degrees = np.array([d for n, d in G.degree()])
+    degrees = np.array([d for _, d in G.degree()])
     if len(degrees) == 0:
         return np.nan
     hist = np.bincount(degrees)
     prob = hist / np.sum(hist)
     prob = prob[prob > 0]
-    entropy = -np.sum(prob * np.log(prob))
-    return entropy
+    return -np.sum(prob * np.log(prob))
 
-# ---------- Plot Funktionen ----------
+# ---------- Plot: Gradverteilung ----------
 def plot_visibility_graph(G):
     degrees = [deg for _, deg in G.degree()]
     if degrees:
         plt.figure(figsize=(8, 4), facecolor='#000')
-        plt.hist(degrees, bins=range(min(degrees), max(degrees)+1), alpha=0.8, color='#6DCFF6', edgecolor='white')
+        plt.hist(degrees, bins=range(min(degrees), max(degrees)+1),
+                 alpha=0.8, color='#6DCFF6', edgecolor='white')
         plt.title("Degree Distribution of Visibility Graph", color='white')
         plt.xlabel("Degree", color='white')
         plt.ylabel("Frequency", color='white')
@@ -128,8 +115,9 @@ def plot_visibility_graph(G):
         st.pyplot(plt.gcf())
         plt.close()
 
+# ---------- Plot: Netzwerk ----------
 def plot_visibility_network(G):
-    if len(G.nodes) > 0:
+    if G.number_of_nodes() > 0:
         plt.figure(figsize=(10, 6), facecolor='#000')
         pos = nx.spring_layout(G, seed=42)
         nx.draw_networkx_nodes(G, pos, node_size=20, node_color='#6DCFF6', alpha=0.8)
@@ -150,23 +138,18 @@ def plot_dfa_loglog(rr, max_windows=20):
     rr = rr - np.mean(rr)
     N = len(rr)
     nvals = np.unique(np.logspace(1, np.log10(N // 4), num=max_windows, dtype=int))
-
     log_n = []
     log_F = []
 
     for n in nvals:
-        segments = N // n
-        if segments < 4:
+        if N // n < 4:
             continue
-        reshaped = rr[:segments * n].reshape((segments, n))
+        reshaped = rr[:(N // n) * n].reshape(-1, n)
         x = np.arange(n)
-
         trends = np.polyfit(x, reshaped.T, 1)
         fits = trends[0] * x[:, None] + trends[1]
         detrended = reshaped - fits.T
-
-        F = np.sqrt(np.mean(detrended**2, axis=1))
-        F_n = np.mean(F)
+        F_n = np.sqrt(np.mean(detrended**2, axis=1)).mean()
 
         log_n.append(np.log10(n))
         log_F.append(np.log10(F_n))
@@ -209,10 +192,9 @@ if uploaded_file is not None:
     plot_visibility_network(G)
 
     st.subheader("🌐 GHVE Netzwerk und Entropie")
-    with st.spinner("Berechne GHVE Netzwerk..."):
-        rr_diff = np.diff(rr_intervals)
-        G_ghve = ghve_visibility_graph_fast(rr_diff)
-        entropy = compute_ghve_entropy(G_ghve)
+    rr_diff = np.diff(rr_intervals)
+    G_ghve = ghve_visibility_graph_fast(rr_diff)
+    entropy = compute_ghve_entropy(G_ghve)
     st.success(f"✅ **GHVE Entropie**: {entropy:.3f}")
     plot_visibility_network(G_ghve)
 
