@@ -154,11 +154,15 @@ def plot_dfa_loglog(rr, max_windows=20):
         log_n.append(np.log10(n))
         log_F.append(np.log10(F_n))
 
+    if not log_n:
+        st.warning("Zu wenig Daten für DFA Plot.")
+        return
+
     slope, intercept = np.polyfit(log_n, log_F, 1)
     reg_line = 10**(intercept + slope * np.array(log_n))
 
     plt.figure(facecolor='#000')
-    plt.plot(10**np.array(log_n), 10**np.array(log_F), 'o-', label='F(n) vs n', color='#6DCFF6')
+    plt.plot(10**np.array(log_n), 10**np.array(log_F), 'o-', label='F(n)', color='#6DCFF6')
     plt.plot(10**np.array(log_n), reg_line, '--', color='white', label=f'α ≈ {slope:.3f}')
     plt.xscale('log')
     plt.yscale('log')
@@ -192,16 +196,18 @@ if uploaded_file is not None:
     plot_visibility_network(G)
 
     st.subheader("🌐 GHVE Netzwerk und Entropie")
-    rr_diff = np.diff(rr_intervals)
-    G_ghve = ghve_visibility_graph_fast(rr_diff)
-    entropy = compute_ghve_entropy(G_ghve)
-    st.success(f"✅ **GHVE Entropie**: {entropy:.3f}")
-    plot_visibility_network(G_ghve)
+    with st.spinner("Berechne GHVE..."):
+        rr_diff = np.diff(rr_intervals[:500])  # Performance-Limitierung!
+        G_ghve = ghve_visibility_graph_fast(rr_diff)
+        entropy = compute_ghve_entropy(G_ghve)
+        st.success(f"✅ **GHVE Entropie**: {entropy:.3f}")
+        plot_visibility_network(G_ghve)
 
     st.subheader("📉 DFA – Detrended Fluctuation Analysis")
-    alpha = compute_dfa(rr_intervals)
-    st.success(f"✅ **DFA α-Wert**: {alpha:.3f}")
-    plot_dfa_loglog(rr_intervals)
+    with st.spinner("Berechne DFA..."):
+        alpha = compute_dfa(rr_intervals)
+        st.success(f"✅ **DFA α-Wert**: {alpha:.3f}")
+        plot_dfa_loglog(rr_intervals)
 
 else:
     st.info("Bitte lade eine .txt-Datei mit RR-Intervallen hoch (eine Zahl pro Zeile).")
